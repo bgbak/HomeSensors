@@ -10,4 +10,9 @@ Grafana uses the InfluxDB as datasource.
 * paho-mqtt
 * influxdb
 
+
+### Note: Deep sleep
+The sketch uses deep sleep to save battery.
+Connect Pin D0 to RST on the WeMos. Otherwise the device will never wake up.
+
 Thanks to Lars Bergqvist for inspiration and code. larsbergqvist.wordpress.com

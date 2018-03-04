@@ -22,10 +22,9 @@ PubSubClient mqttClient(BROKER_IP, BROKER_PORT, wifiClient);
 #define DHTTYPE DHT22
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
-#define SECONDS_BETWEEN_MEASUREMENTS 60
-const int sleepSeconds = 10;
-unsigned long lastTime = 0;
-bool firstTime = true;
+#define SECONDS_BETWEEN_MEASUREMENTS 6000
+const int sleepSeconds = 10e6;
+
 char msg[50];
 
 void connectToWifi()
@@ -107,12 +106,6 @@ void loop()
     connectToBroker();
   }
 
-  if (firstTime || (millis() - lastTime > SECONDS_BETWEEN_MEASUREMENTS * 1000))
-  {
-
-    firstTime = false;
-    lastTime = millis(); 
-
     mqttClient.loop();
 
     //Initialize event class
@@ -157,5 +150,8 @@ void loop()
       //Quick! Send it to the MQTT Broker!
       publishFloatValue(humidity, "Home/Office/Humidity");
     }
-  }
+
+    Serial.println("Going to sleep. Hope I wake up again some time");
+    ESP.deepSleep(sleepSeconds);
+  
 }
