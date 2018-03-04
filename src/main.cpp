@@ -109,6 +109,10 @@ void loop()
 
   if (firstTime || (millis() - lastTime > SECONDS_BETWEEN_MEASUREMENTS * 1000))
   {
+
+    firstTime = false;
+    lastTime = millis(); 
+
     mqttClient.loop();
 
     //Initialize event class
@@ -121,6 +125,8 @@ void loop()
     if (isnan(event.temperature))
     {
       Serial.println("Error reading temperature!");
+      mqttClient.publish("Home/Office/Errors", "Error reading temp");
+
     }
     //We got a value!
     else
