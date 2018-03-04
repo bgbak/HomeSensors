@@ -4,24 +4,26 @@ import datetime
 import time
 from influxdb import InfluxDBClient
 
+
 def on_connect(client, userdata, flags, rc):
     print("Connected to MQTT Broker with result code "+str(rc))
     print("Waiting for message...")
     client.subscribe("Home/#")
-    
+
+
 def on_message(client, userdata, msg):
     print("Received a message on topic: " + msg.topic)
     # Use utc as timestamp
-    receiveTime=datetime.datetime.utcnow()
-    message=msg.payload.decode("utf-8")
-    isfloatValue=False
+    receiveTime = datetime.datetime.utcnow()
+    message = msg.payload.decode("utf-8")
+    isfloatValue = False
     try:
         # Convert the string to a float so that it is stored as a number and not a string in the database
         val = float(message)
-        isfloatValue=True
+        isfloatValue = True
     except:
         print("Could not convert " + message + " to a float value")
-        isfloatValue=False
+        isfloatValue = False
 
     if isfloatValue:
         print(str(receiveTime) + ": " + msg.topic + " " + str(val))
@@ -38,7 +40,8 @@ def on_message(client, userdata, msg):
 
         dbclient.write_points(json_body)
         print("Finished writing to InfluxDB")
-        
+
+
 # Set up a client for InfluxDB
 dbclient = InfluxDBClient('192.168.10.10', 8086, 'root', 'root', 'sensordata')
 
@@ -46,7 +49,7 @@ dbclient = InfluxDBClient('192.168.10.10', 8086, 'root', 'root', 'sensordata')
 client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
-connOK=False
+connOK = False
 while(connOK == False):
     try:
         client.connect("192.168.10.10", 1883, 60)
