@@ -10,7 +10,7 @@
 //
 // WIFI and MQTT setup
 //
-#define CLIENT_NAME "Office"
+#define CLIENT_NAME "Livingroom"
 WiFiClient wifiClient;
 PubSubClient mqttClient(BROKER_IP, BROKER_PORT, wifiClient);
 
@@ -22,8 +22,7 @@ PubSubClient mqttClient(BROKER_IP, BROKER_PORT, wifiClient);
 #define DHTTYPE DHT22
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
-#define SECONDS_BETWEEN_MEASUREMENTS 6000
-const int sleepSeconds = 10e6;
+const int sleepSeconds = 600e6;
 
 char msg[50];
 
@@ -118,7 +117,7 @@ void loop()
     if (isnan(event.temperature))
     {
       Serial.println("Error reading temperature!");
-      mqttClient.publish("Home/Office/Errors", "Error reading temp");
+      mqttClient.publish("Home/Livingroom/Errors", "Error reading temp");
 
     }
     //We got a value!
@@ -129,7 +128,7 @@ void loop()
       Serial.println(" *C");
       float temperature = event.temperature;
       //Quick! Send it to the MQTT Broker!
-      publishFloatValue(temperature, "Home/Office/Temperature");
+      publishFloatValue(temperature, "Home/Livingroom/Temperature");
     }
 
     //Get humidity event from sensor
@@ -148,7 +147,7 @@ void loop()
       Serial.println("%");
       float humidity = event.relative_humidity;
       //Quick! Send it to the MQTT Broker!
-      publishFloatValue(humidity, "Home/Office/Humidity");
+      publishFloatValue(humidity, "Home/Livingroom/Humidity");
     }
 
     Serial.println("Going to sleep. Hope I wake up again some time");
