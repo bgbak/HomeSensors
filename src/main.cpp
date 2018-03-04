@@ -10,9 +10,9 @@
 //
 // WIFI and MQTT setup
 //
-#define CLIENT_NAME "Bedroom"
+#define CLIENT_NAME "Office"
 WiFiClient wifiClient;
-PubSubClient mqttClient(BROKER_IP,BROKER_PORT,wifiClient);
+PubSubClient mqttClient(BROKER_IP, BROKER_PORT, wifiClient);
 
 //
 // Sensor setup
@@ -23,103 +23,133 @@ PubSubClient mqttClient(BROKER_IP,BROKER_PORT,wifiClient);
 DHT_Unified dht(DHTPIN, DHTTYPE);
 
 #define SECONDS_BETWEEN_MEASUREMENTS 60
+const int sleepSeconds = 10;
 unsigned long lastTime = 0;
 bool firstTime = true;
 char msg[50];
 
-void connectToWiFiAndBroker() 
+void connectToWifi()
 {
   Serial.print("Connecting to WIFI");
-  while (WiFi.status() != WL_CONNECTED) 
+  while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
-    delay(1000);
+    delay(500);
   }
   Serial.println("Connected to WIFI!");
+}
 
+void connectToBroker()
+{
   Serial.println("Connecting to broker");
-  while (!mqttClient.connect(CLIENT_NAME)) 
+  while (!mqttClient.connect(CLIENT_NAME))
   {
     Serial.print(".");
-    delay(1000);
+    delay(500);
   }
   Serial.println("Connected to broker!");
 }
 
-
 char *ftoa(char *buffer, float f)
-{ 
+{
   char *returnString = buffer;
   long integerPart = (long)f;
   itoa(integerPart, buffer, 10);
-  while (*buffer != '\0') buffer++;
+  while (*buffer != '\0')
+    buffer++;
   *buffer++ = '.';
   long decimalPart = abs((long)((f - integerPart) * 100));
   itoa(decimalPart, buffer, 10);
   return returnString;
 }
 
-void publishFloatValue(float value, char* topic)
+void publishFloatValue(float value, char *topic)
 {
-    if (isnan(value)) 
-    {
-      Serial.println("Invalid value!");
-      return;
-    }
+  if (isnan(value))
+  {
+    Serial.println("Invalid value!");
+    return;
+  }
 
-    Serial.println("Publishing a new value");
-    ftoa(msg, value);
-    Serial.println(msg);
-    mqttClient.publish(topic, msg);
+  Serial.println("Publishing a new value");
+  ftoa(msg, value);
+  Serial.println(msg);
+  mqttClient.publish(topic, msg);
 }
 
-void setup() 
+void setup()
 {
+  //Initialize serial connection
   Serial.begin(9600);
-  
+
+  //Set WiFi mode to Standard
+  WiFi.mode(WIFI_STA);
+
+  //Start connecting to the AP
   WiFi.begin(WLAN_SSID, WLAN_PASS);
 
+  //Initialize DHT sensor
   dht.begin();
 }
 
+void loop()
+{
 
-void loop() 
-{ 
-
-  if ( firstTime || (millis() - lastTime > SECONDS_BETWEEN_MEASUREMENTS*1000) ) 
+  // Test if we are connected to the AP
+  if (!WiFi.isConnected())
   {
-    firstTime = false;
-    lastTime = millis();
-  
-    if (!mqttClient.connected()) 
-    {
-      connectToWiFiAndBroker();
-    }
+    connectToWifi();
+  }
 
+  // Test if we are connected to the MQTT broker
+  if (!mqttClient.connected())
+  {
+    connectToBroker();
+  }
+
+  if (firstTime || (millis() - lastTime > SECONDS_BETWEEN_MEASUREMENTS * 1000))
+  {
     mqttClient.loop();
 
+    //Initialize event class
     sensors_event_t event;
+
+    //Get temperature event from sensor.
     dht.temperature().getEvent(&event);
-    if (isnan(event.temperature)) {
+
+    //Check if we actually got a value
+    if (isnan(event.temperature))
+    {
       Serial.println("Error reading temperature!");
     }
-    else {
+    //We got a value!
+    else
+    {
       Serial.print("Temperature: ");
       Serial.print(event.temperature);
       Serial.println(" *C");
       float temperature = event.temperature;
-      publishFloatValue(temperature,"Home/Bedroom/Temperature");
+      //Quick! Send it to the MQTT Broker!
+      publishFloatValue(temperature, "Home/Office/Temperature");
     }
+
+    //Get humidity event from sensor
     dht.humidity().getEvent(&event);
-    if (isnan(event.relative_humidity)) {
+
+    //Check if we actually got a value
+    if (isnan(event.relative_humidity))
+    {
       Serial.println("Error reading humidity!");
     }
-    else {
+    //We got a value!
+    else
+    {
       Serial.print("Humidity: ");
       Serial.print(event.relative_humidity);
       Serial.println("%");
       float humidity = event.relative_humidity;
-      publishFloatValue(humidity,"Home/Bedroom/Humidity");
+      //Quick! Send it to the MQTT Broker!
+      publishFloatValue(humidity, "Home/Office/Humidity");
     }
   }
 }
